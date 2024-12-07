@@ -1,0 +1,218 @@
+#Iteration 1
+
+import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+
+# Loading the CSV files
+cholera_data = pd.read_csv('snow_dates.csv')  # I am using macbook so file path can be different in your system so please change accordingly
+deaths = pd.read_csv('deaths.csv') 
+
+# Ensure the 'date' column is in datetime format
+cholera_data['date'] = pd.to_datetime(cholera_data['date'])
+
+# Create an interactive plot with Plotly
+fig = make_subplots()
+
+
+# Add line for attacks
+fig.add_trace(go.Scatter(
+    x=cholera_data['date'],
+    y=cholera_data['attacks'],
+    mode='lines+markers',
+    name='Attacks',
+    hovertemplate='Date: %{x}<br>Attacks: %{y}<extra></extra>'
+))
+
+# Add line for deaths
+fig.add_trace(go.Scatter(
+    x=cholera_data['date'],
+    y=cholera_data['deaths'],
+    mode='lines+markers',
+    name='Deaths',
+    hovertemplate='Date: %{x}<br>Deaths: %{y}<extra></extra>'
+))
+
+# Update layout for better visualization
+fig.update_layout(
+    title='Interactive Timeline of Cholera Attacks and Deaths (1854)',
+    xaxis=dict(title='Date'),
+    yaxis=dict(title='Count'),
+    hovermode='x unified',
+    template='plotly_white'
+)
+
+# Show the interactive plot
+fig.show()
+
+
+#Iteration 2
+
+import pandas as pd
+import plotly.graph_objects as go
+from PIL import Image
+import random
+from datetime import datetime, timedelta
+
+deaths = pd.read_csv('/Users/omjani/Downloads/John Snow 4/Data/deaths.csv') # please change the path according to your system
+
+# Load the map image 
+map_image_path = "snowmap.png"  # please adjust this path as needed because in my mac it's not directly loading.
+map_img = Image.open("/Users/omjani/Downloads/snowmap.png")
+
+# Sample data generation for attacks and deaths
+date_range_start = datetime(1854, 8, 19)
+num_samples = 50
+
+# Create a DataFrame with sample data
+data = {
+    "date": [date_range_start + timedelta(days=random.randint(0, 30)) for _ in range(num_samples)],
+    "x": [random.uniform(400, 1100) for _ in range(num_samples)],
+    "y": [random.uniform(200, 800) for _ in range(num_samples)],
+    "attacks": [random.randint(1, 10) for _ in range(num_samples)],
+    "deaths": [random.randint(1, 5) for _ in range(num_samples)]
+}
+cholera_data = pd.DataFrame(data)
+
+# Define the layout for the map background
+fig = go.Figure()
+
+# Add the map as a background image
+fig.add_layout_image(
+    dict(
+        source=map_img,
+        xref="x",
+        yref="y",
+        x=0,
+        y=map_img.size[1],  # Adjusts to the map size
+        sizex=map_img.size[0],
+        sizey=map_img.size[1],
+        sizing="stretch",
+        opacity=0.8,
+        layer="below"
+    )
+)
+
+# Plot attacks as red circles (initially hidden)
+fig.add_trace(go.Scatter(
+    x=cholera_data['x'],
+    y=cholera_data['y'],
+    mode='markers',
+    marker=dict(size=10, color='red', opacity=0.7),
+    text=[f"Date: {d}<br>Attacks: {a}" for d, a in zip(cholera_data['date'], cholera_data['attacks'])],
+    hoverinfo='text',
+    name='Attacks',
+    visible=False  # Initially hidden
+))
+
+# Plot deaths as blue circles (initially shown)
+fig.add_trace(go.Scatter(
+    x=cholera_data['x'],
+    y=cholera_data['y'],
+    mode='markers',
+    marker=dict(size=10, color='blue', opacity=0.7, symbol='cross'),
+    text=[f"Date: {d}<br>Deaths: {de}" for d, de in zip(cholera_data['date'], cholera_data['deaths'])],
+    hoverinfo='text',
+    name='Deaths',
+    visible=True  # Initially shown
+))
+
+# Configure the layout of the plot with dropdown menu
+fig.update_layout(
+    title='Interactive Map of Cholera Attacks and Deaths (1854)',
+    xaxis=dict(visible=False),
+    yaxis=dict(visible=False),
+    template='plotly_white',
+    showlegend=True,
+    hovermode='closest',
+    updatemenus=[
+        dict(
+            buttons=[
+                dict(
+                    label="Show Attacks",
+                    method="update",
+                    args=[{"visible": [True, False]}, {"title": "Interactive Map of Cholera Attacks (1854)"}]
+                ),
+                dict(
+                    label="Show Deaths",
+                    method="update",
+                    args=[{"visible": [False, True]}, {"title": "Interactive Map of Cholera Deaths (1854)"}]
+                )
+            ],
+            direction="down",
+            showactive=True,
+            x=0.17,
+            xanchor="left",
+            y=1.1,
+            yanchor="top"
+        )
+    ]
+)
+
+# Show the interactive map
+fig.show()
+
+
+#Iteration 3
+
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
+import random
+
+
+def fetch_real_time_data():
+
+    return create_sample_data()
+
+def create_sample_data(num_samples=50):
+    """Generate sample data for the visualization"""
+    data = {
+        "date": [(datetime.now() - pd.Timedelta(days=random.randint(0, 30))).strftime("%Y-%m-%d") for _ in range(num_samples)],
+        "latitude": [51.513 + random.uniform(-0.01, 0.01) for _ in range(num_samples)],
+        "longitude": [-0.136 + random.uniform(-0.01, 0.01) for _ in range(num_samples)],
+        "attacks": [random.randint(1, 10) for _ in range(num_samples)],
+        "deaths": [random.randint(1, 10) for _ in range(num_samples)]
+    }
+    return pd.DataFrame(data)
+
+def create_real_time_cholera_map():
+    # Fetch simulated real-time data
+    cholera_data = fetch_real_time_data()
+    
+    # Create the map figure using Plotly Express
+    fig = px.scatter_mapbox(
+        cholera_data,
+        lat="latitude",
+        lon="longitude",
+        size="attacks",
+        color="deaths",
+        hover_name="date",
+        hover_data={"attacks": True, "deaths": True, "latitude": False, "longitude": False},
+        color_continuous_scale="Viridis",
+        zoom=13,
+        height=800
+    )
+    
+    # Update map layout
+    fig.update_layout(
+        mapbox_style="open-street-map",
+        title={
+            'text': ' Interactive Map of Cholera Outbreaks',
+            'y':0.95,
+            'x':0.5,
+            'xanchor': 'center',
+            'yanchor': 'top'
+        },
+        margin=dict(l=20, r=20, t=100, b=100)
+    )
+    
+    return fig
+
+def main():
+    # Create and display the real-time map
+    fig = create_real_time_cholera_map()
+    fig.show()
+
+if __name__ == "__main__":
+    main()
